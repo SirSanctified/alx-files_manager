@@ -90,3 +90,58 @@ export const postUpload = async (req, res) => {
       : parentId,
   });
 }
+
+export const getShow = async (req, res) => {
+  const { id } = req.params;
+  const token = req.headers["x-token"];
+  const userId = await redisClient.get(`auth_${token}`);
+  if (!userId) return res.status(401).json({ "error": "Unauthorized" });
+  const file = await files.findOne({ _id: new mongodb.ObjectID(id), userId: new ObjectID(userId) });
+  if (!file) return res.status(404).json({ "error": "Not found" });
+  return res.status(200).json({
+    "id": file._id.toString(),
+    "userId": file.userId.toString(),
+    "name": file.name,
+    "type": file.type,
+    "isPublic": file.isPublic,
+    "parentId": file.parentId
+  });
+}
+
+export const getIndex = async (req, res) => {
+  const token = req.headers["x-token"];
+  const userId = await redisClient.get(`auth_${token}`);
+  if (!userId) return res.status(401).json({ "error": "Unauthorized" });
+  const parentId = req.query.parentId || ROOT_FOLDER_ID.toString();
+  const page = /\d+/.test((req.query.page || '').toString())
+    ? Number.parseInt(req.query.page, 10)
+    : 0;
+  const filesFilter = {
+    userId: userId,
+    parentId: parentId === ROOT_FOLDER_ID.toString()
+      ? parentId
+      : new mongodb.ObjectID(parentId),
+  };
+
+  const retrievedFiles = await files
+    .aggregate([
+      { $match: filesFilter },
+      { $sort: { _id: -1 } },
+      { $skip: page * 20 },
+      { $limit: 20 },
+      {
+        $project: {
+          _id: 0,
+          id: '$_id',
+          userId: '$userId',
+          name: '$name',
+          type: '$type',
+          isPublic: '$isPublic',
+          parentId: {
+            $cond: { if: { $eq: ['$parentId', '0'] }, then: 0, else: '$parentId' },
+          },
+        },
+      },
+    ]).toArray();
+  res.status(200).json(retrievedFiles);
+}
