@@ -193,3 +193,37 @@ export const putUnpublish = async (req, res) => {
       : file.parentId.toString(),
   });
 }
+
+export const getFile = async (req, res) => {
+  const { id } = req.params;
+  const size = req.query.size || null;
+  const userId = await redisClient.get(`auth_${req.headers['x-token']}`);
+  const fileFilter = {
+    _id: new mongodb.ObjectId(id),
+  };
+  const file = await files.findOne(fileFilter);
+
+  if (!file || (!file.isPublic && (file.userId.toString() !== userId))) {
+    return res.status(404).json({ error: 'Not found' });
+  }
+  if (file.type === VALID_FILE_TYPES.folder) {
+    return res.status(400).json({ error: 'A folder doesn\'t have content' });
+  }
+  let filePath = file.localPath;
+  if (size) {
+    filePath = `${file.localPath}_${size}`;
+  }
+  if (existsSync(filePath)) {
+    const fileInfo = await statAsync(filePath);
+    if (!fileInfo.isFile()) {
+      res.status(404).json({ error: 'Not found' });
+      return;
+    }
+  } else {
+    res.status(404).json({ error: 'Not found' });
+    return;
+  }
+  const absoluteFilePath = await realpathAsync(filePath);
+  res.setHeader('Content-Type', contentType(file.name) || 'text/plain; charset=utf-8');
+  res.status(200).sendFile(absoluteFilePath);
+}
