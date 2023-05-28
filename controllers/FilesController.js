@@ -96,7 +96,7 @@ export const getShow = async (req, res) => {
   const token = req.headers["x-token"];
   const userId = await redisClient.get(`auth_${token}`);
   if (!userId) return res.status(401).json({ "error": "Unauthorized" });
-  const file = await files.findOne({ _id: new mongodb.ObjectID(id), userId: new ObjectID(userId) });
+  const file = await files.findOne({ _id: new mongodb.ObjectID(id), userId: new mongodb.ObjectID(userId) });
   if (!file) return res.status(404).json({ "error": "Not found" });
   return res.status(200).json({
     "id": file._id.toString(),
@@ -117,7 +117,7 @@ export const getIndex = async (req, res) => {
     ? Number.parseInt(req.query.page, 10)
     : 0;
   const filesFilter = {
-    userId: userId,
+    userId: new mongodb.ObjectID(userId),
     parentId: parentId === ROOT_FOLDER_ID.toString()
       ? parentId
       : new mongodb.ObjectID(parentId),
@@ -144,4 +144,52 @@ export const getIndex = async (req, res) => {
       },
     ]).toArray();
   res.status(200).json(retrievedFiles);
+}
+
+export const putPublish = async (req, res) => {
+  const { id } = req.params;
+  const userId = await redisClient.get(`auth_${req.headers["x-token"]}`);
+  if (!userId) return res.status(401).json({ "error": "Unauthorized" });
+  const fileFilter = {
+    _id: new mongodb.ObjectID(id),
+    userId: new mongodb.ObjectID(userId),
+  };
+  const file = await files.findOne(fileFilter);
+
+  if (!file) return res.status(404).json({ error: 'Not found' });
+  await files.updateOne(fileFilter, { $set: { isPublic: true } });
+  res.status(200).json({
+    id,
+    userId,
+    name: file.name,
+    type: file.type,
+    isPublic: true,
+    parentId: file.parentId === ROOT_FOLDER_ID.toString()
+      ? 0
+      : file.parentId.toString(),
+  });
+}
+
+export const putUnpublish = async (req, res) => {
+  const { id } = req.params;
+  const userId = await redisClient.get(`auth_${req.headers["x-token"]}`);
+  if (!userId) return res.status(401).json({ "error": "Unauthorized" });
+  const fileFilter = {
+    _id: new mongodb.ObjectID(id),
+    userId: new mongodb.ObjectID(userId),
+  };
+  const file = await files.findOne(fileFilter);
+
+  if (!file) return res.status(404).json({ error: 'Not found' });
+  await files.updateOne(fileFilter, { $set: { isPublic: false } });
+  res.status(200).json({
+    id,
+    userId,
+    name: file.name,
+    type: file.type,
+    isPublic: false,
+    parentId: file.parentId === ROOT_FOLDER_ID.toString()
+      ? 0
+      : file.parentId.toString(),
+  });
 }
