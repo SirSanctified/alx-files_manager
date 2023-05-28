@@ -1,14 +1,13 @@
 import { createClient } from 'redis';
-import { promisify } from 'util';
 class RedisClient {
-  constructor() {
-    this.client = createClient( {
+  constructor () {
+    this.client = createClient({
       socket: {
         host: '127.0.0.1'
       }
     });
     this.client.connect().then(() => {
-      this.connected = true
+      this.connected = true;
     });
     this.client.on('error', (error) => {
       console.log(`Redis client not connected to server: ${error}`);
@@ -16,19 +15,19 @@ class RedisClient {
     });
   }
 
-  isAlive() {
+  isAlive () {
     return this.connected;
   }
 
-  async get(key) {
+  async get (key) {
     return await this.client.get(key);
   }
 
-  async set(key, value, time) {
+  async set (key, value, time) {
     await this.client.setEx(key, time, value);
   }
 
-  async del(key) {
+  async del (key) {
     await this.client.del(key);
   }
 }
