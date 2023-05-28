@@ -17,18 +17,17 @@ export const getConnect = async (req, res) => {
   if (credentialsRegex.test(credentials)) {
     const email = credentials.split(':')[0];
     const password = crypto.createHash('sha1').update(credentials.split(':')[1]).digest('hex');
-    console.log('Im here');
     // get user from database with email and check if passwords are similar
     const user = await dbClient.client.db().collection("users").findOne({ email: email});
     if (!user) {
       return res.status(401).json({ "error": "Unauthorized" });
     }
     if (user.password !== password) {
-      console.log('Passwords do not match')
       return res.status(401).json({ "error": "Unauthorized" });
     }
     const token = uuidv4();
-    await redisClient.set(`auth_${token}`, user._id, 60 * 60 * 24);
+    const time = 60 * 60 * 24;
+    if (redisClient.isAlive()) await redisClient.set(`auth_${token}`, user._id.toString(), time);
     return res.status(200).json({ "token": token });
   } else {
     return res.status(401).json({ "error": "Unauthorized" });
@@ -36,17 +35,9 @@ export const getConnect = async (req, res) => {
 }
 
 export const getDisconnect = async (req, res) => {
-  const token = req.headers["X-Token"];
+  const token = req.headers["x-token"];
   const userId = await redisClient.get(`auth_${token}`);
   if (!userId) return res.status(401).json({ "error": "Unauthorized"});
   await redisClient.del(`auth_${token}`);
   return res.sendStatus(204);
-}
-
-export const getMe = async (req, res) => {
-  const token = req.headers["X-Token"];
-  const userId = await redisClient.get(`auth_${token}`);
-  if (!userId) return res.status(401).json({ "error": "Unauthorized"});
-  const user = dbClient.client.db().collection("users").findOne({_id: userId});
-  if (user) return res.status(200).json({ "id": user._id, "email": user.email });
 }

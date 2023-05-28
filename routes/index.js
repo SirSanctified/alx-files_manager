@@ -1,7 +1,7 @@
 import { Router } from "express";
 import { getStats, getStatus } from "../controllers/AppController.js";
-import { postNew } from "../controllers/UsersController.js";
-import { getConnect, getDisconnect, getMe } from "../controllers/AuthController.js";
+import { postNew, getMe  } from "../controllers/UsersController.js";
+import { getConnect, getDisconnect} from "../controllers/AuthController.js";
 
 const router = Router();
 
