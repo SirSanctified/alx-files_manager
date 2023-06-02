@@ -1,10 +1,12 @@
+/* eslint-disable no-console */
 import { createClient } from 'redis';
+
 class RedisClient {
-  constructor () {
+  constructor() {
     this.client = createClient({
       socket: {
-        host: '127.0.0.1'
-      }
+        host: '127.0.0.1',
+      },
     });
     this.client.connect().then(() => {
       this.connected = true;
@@ -15,19 +17,19 @@ class RedisClient {
     });
   }
 
-  isAlive () {
+  isAlive() {
     return this.connected;
   }
 
-  async get (key) {
-    return await this.client.get(key);
+  async get(key) {
+    return this.client.get(key);
   }
 
-  async set (key, value, time) {
+  async set(key, value, time) {
     await this.client.setEx(key, time, value);
   }
 
-  async del (key) {
+  async del(key) {
     await this.client.del(key);
   }
 }

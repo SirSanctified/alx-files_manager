@@ -1,3 +1,4 @@
+/* eslint-disable import/extensions */
 import crypto from 'crypto';
 import mongodb from 'mongodb';
 import dbClient from '../utils/db.js';
@@ -16,7 +17,7 @@ export const postNew = async (req, res) => {
   }
 
   // check if email already exists
-  const user = await dbClient.client.db().collection('users').findOne({ email: email });
+  const user = await dbClient.client.db().collection('users').findOne({ email });
 
   if (user) {
     return res.status(400).json({ error: 'Already exists' });
@@ -26,11 +27,11 @@ export const postNew = async (req, res) => {
   const hashedPassword = crypto.createHash('sha1').update(password).digest('hex');
 
   const savedUser = await dbClient.client.db().collection('users').insertOne({
-    email: email,
-    password: hashedPassword
+    email,
+    password: hashedPassword,
   });
 
-  return res.status(201).json({ id: savedUser.insertedId, email: email });
+  return res.status(201).json({ id: savedUser.insertedId, email });
 };
 
 export const getMe = async (req, res) => {

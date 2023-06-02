@@ -1,3 +1,6 @@
+/* eslint-disable no-underscore-dangle */
+/* eslint-disable import/extensions */
+/* eslint-disable no-buffer-constructor */
 import crypto from 'crypto';
 import { v4 as uuidv4 } from 'uuid';
 import dbClient from '../utils/db.js';
@@ -18,7 +21,7 @@ export const getConnect = async (req, res) => {
     const email = credentials.split(':')[0];
     const password = crypto.createHash('sha1').update(credentials.split(':')[1]).digest('hex');
     // get user from database with email and check if passwords are similar
-    const user = await dbClient.client.db().collection('users').findOne({ email: email });
+    const user = await dbClient.client.db().collection('users').findOne({ email });
     if (!user) {
       return res.status(401).json({ error: 'Unauthorized' });
     }
@@ -28,10 +31,9 @@ export const getConnect = async (req, res) => {
     const token = uuidv4();
     const time = 60 * 60 * 24;
     if (redisClient.isAlive()) await redisClient.set(`auth_${token}`, user._id.toString(), time);
-    return res.status(200).json({ token: token });
-  } else {
-    return res.status(401).json({ error: 'Unauthorized' });
+    return res.status(200).json({ token });
   }
+  return res.status(401).json({ error: 'Unauthorized' });
 };
 
 export const getDisconnect = async (req, res) => {

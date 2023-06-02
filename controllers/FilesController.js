@@ -1,9 +1,12 @@
+/* eslint-disable no-underscore-dangle */
+/* eslint-disable consistent-return */
+/* eslint-disable import/extensions */
 import mongodb from 'mongodb';
 import { tmpdir } from 'os';
 import { promisify } from 'util';
 import { v4 as uuidv4 } from 'uuid';
 import {
-  mkdir, writeFile, stat, existsSync, realpath
+  mkdir, writeFile, stat, existsSync, realpath,
 } from 'fs';
 import { join as joinPath } from 'path';
 import Queue from 'bull';
@@ -18,7 +21,7 @@ const ROOT_FOLDER_ID = 0;
 const VALID_FILE_TYPES = {
   folder: 'folder',
   file: 'file',
-  image: 'image'
+  image: 'image',
 };
 const DEFAULT_ROOT_FOLDER = process.env.FOLDER_PATH || '/temp/files_manager';
 const mkDirAsync = promisify(mkdir);
@@ -63,7 +66,7 @@ export const postUpload = async (req, res) => {
     isPublic,
     parentId: (parentId === ROOT_FOLDER_ID) || (parentId === ROOT_FOLDER_ID.toString())
       ? '0'
-      : new mongodb.ObjectID(parentId)
+      : new mongodb.ObjectID(parentId),
   };
   await mkDirAsync(baseDir, { recursive: true });
   if (type !== VALID_FILE_TYPES.folder) {
@@ -86,7 +89,7 @@ export const postUpload = async (req, res) => {
     isPublic,
     parentId: (parentId === ROOT_FOLDER_ID) || (parentId === ROOT_FOLDER_ID.toString())
       ? 0
-      : parentId
+      : parentId,
   });
 };
 
@@ -95,7 +98,10 @@ export const getShow = async (req, res) => {
   const token = req.headers['x-token'];
   const userId = await redisClient.get(`auth_${token}`);
   if (!userId) return res.status(401).json({ error: 'Unauthorized' });
-  const file = await files.findOne({ _id: new mongodb.ObjectID(id), userId: new mongodb.ObjectID(userId) });
+  const file = await files.findOne({
+    _id: new mongodb.ObjectID(id),
+    userId: new mongodb.ObjectID(userId),
+  });
   if (!file) return res.status(404).json({ error: 'Not found' });
   return res.status(200).json({
     id: file._id.toString(),
@@ -103,7 +109,7 @@ export const getShow = async (req, res) => {
     name: file.name,
     type: file.type,
     isPublic: file.isPublic,
-    parentId: file.parentId
+    parentId: file.parentId,
   });
 };
 
@@ -119,7 +125,7 @@ export const getIndex = async (req, res) => {
     userId: new mongodb.ObjectID(userId),
     parentId: parentId === ROOT_FOLDER_ID.toString()
       ? parentId
-      : new mongodb.ObjectID(parentId)
+      : new mongodb.ObjectID(parentId),
   };
 
   const retrievedFiles = await files
@@ -137,10 +143,10 @@ export const getIndex = async (req, res) => {
           type: '$type',
           isPublic: '$isPublic',
           parentId: {
-            $cond: { if: { $eq: ['$parentId', '0'] }, then: 0, else: '$parentId' }
-          }
-        }
-      }
+            $cond: { if: { $eq: ['$parentId', '0'] }, then: 0, else: '$parentId' },
+          },
+        },
+      },
     ]).toArray();
   res.status(200).json(retrievedFiles);
 };
@@ -151,7 +157,7 @@ export const putPublish = async (req, res) => {
   if (!userId) return res.status(401).json({ error: 'Unauthorized' });
   const fileFilter = {
     _id: new mongodb.ObjectID(id),
-    userId: new mongodb.ObjectID(userId)
+    userId: new mongodb.ObjectID(userId),
   };
   const file = await files.findOne(fileFilter);
 
@@ -165,7 +171,7 @@ export const putPublish = async (req, res) => {
     isPublic: true,
     parentId: file.parentId === ROOT_FOLDER_ID.toString()
       ? 0
-      : file.parentId.toString()
+      : file.parentId.toString(),
   });
 };
 
@@ -175,7 +181,7 @@ export const putUnpublish = async (req, res) => {
   if (!userId) return res.status(401).json({ error: 'Unauthorized' });
   const fileFilter = {
     _id: new mongodb.ObjectID(id),
-    userId: new mongodb.ObjectID(userId)
+    userId: new mongodb.ObjectID(userId),
   };
   const file = await files.findOne(fileFilter);
 
@@ -189,7 +195,7 @@ export const putUnpublish = async (req, res) => {
     isPublic: false,
     parentId: file.parentId === ROOT_FOLDER_ID.toString()
       ? 0
-      : file.parentId.toString()
+      : file.parentId.toString(),
   });
 };
 
@@ -198,7 +204,7 @@ export const getFile = async (req, res) => {
   const size = req.query.size || null;
   const userId = await redisClient.get(`auth_${req.headers['x-token']}`);
   const fileFilter = {
-    _id: new mongodb.ObjectId(id)
+    _id: new mongodb.ObjectId(id),
   };
   const file = await files.findOne(fileFilter);
 

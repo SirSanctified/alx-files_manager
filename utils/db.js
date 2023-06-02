@@ -1,33 +1,36 @@
+/* eslint-disable no-console */
 import mongodb from 'mongodb';
 import dotenv from 'dotenv';
 
 dotenv.config();
 
 class DBClient {
-  constructor () {
+  constructor() {
+    const host = (process.env.DB_HOST) ? process.env.DB_HOST : 'localhost';
+    const port = (process.env.DB_PORT) ? process.env.DB_PORT : 27017;
+    this.database = (process.env.DB_DATABASE) ? process.env.DB_DATABASE : 'files_manager';
+    const dbUrl = `mongodb://${host}:${port}`;
     this.connected = false;
-    const port = process.env.DB_PORT || 27017;
-    const host = process.env.DB_HOST || 'localhost';
-    const db = process.env.DB_DATABASE || 'files_manager';
-    this.client = new mongodb.MongoClient(`mongodb://${host}:${port}/${db}`, { useUnifiedTopology: true, family: 4 });
-    try {
-      this.client.connect();
+    this.client = new mongodb.MongoClient(dbUrl, { useUnifiedTopology: true });
+    this.client.connect().then(() => {
       this.connected = true;
-    } catch (err) {
-      this.connected = false;
-    }
+    }).catch((err) => console.log(err.message));
   }
 
-  isAlive () {
+  isAlive() {
     return this.connected;
   }
 
-  async nbUsers () {
-    return this.client.db().collection('users').countDocuments();
+  async nbUsers() {
+    await this.client.connect();
+    const users = await this.client.db(this.database).collection('users').countDocuments();
+    return users;
   }
 
-  async nbFiles () {
-    return this.client.db().collection('files').countDocuments();
+  async nbFiles() {
+    await this.client.connect();
+    const users = await this.client.db(this.database).collection('files').countDocuments();
+    return users;
   }
 }
 
