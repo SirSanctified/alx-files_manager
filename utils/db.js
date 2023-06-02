@@ -1,3 +1,5 @@
+#!/usr/bin/node
+
 import mongodb from 'mongodb';
 import dotenv from 'dotenv';
 
