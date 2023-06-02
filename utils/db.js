@@ -1,3 +1,5 @@
+#!/usr/bin/node
+
 /* eslint-disable no-console */
 import mongodb from 'mongodb';
 import dotenv from 'dotenv';

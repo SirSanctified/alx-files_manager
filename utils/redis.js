@@ -1,19 +1,15 @@
+#!/usr/bin/node
 /* eslint-disable no-console */
+
 import { createClient } from 'redis';
 
 class RedisClient {
   constructor() {
-    this.client = createClient({
-      socket: {
-        host: '127.0.0.1',
-      },
-    });
-    this.client.connect().then(() => {
+    this.client = createClient();
+    this.client.on('error', (err) => console.log(err));
+    this.connected = false;
+    this.client.on('connect', () => {
       this.connected = true;
-    });
-    this.client.on('error', (error) => {
-      console.log(`Redis client not connected to server: ${error}`);
-      this.connected = false;
     });
   }
 
@@ -33,6 +29,7 @@ class RedisClient {
     await this.client.del(key);
   }
 }
+
 const redisClient = new RedisClient();
 
 export default redisClient;

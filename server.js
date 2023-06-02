@@ -1,5 +1,7 @@
+#!/usr/bin/node
 /* eslint-disable no-console */
 /* eslint-disable import/extensions */
+
 import express from 'express';
 import dotenv from 'dotenv';
 // import morgan from 'morgan';
