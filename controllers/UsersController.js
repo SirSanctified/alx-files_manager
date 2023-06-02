@@ -1,3 +1,4 @@
+/* eslint-disable import/no-named-as-default */
 /* eslint-disable import/extensions */
 import crypto from 'crypto';
 import mongodb from 'mongodb';
